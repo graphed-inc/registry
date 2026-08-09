@@ -48,7 +48,11 @@ export interface SeoMetrics {
 export interface SeoMetricsResult {
   metrics: SeoMetrics | null;
   /** Why metrics are absent — rendered as the setup hint on /seo. */
-  reason: "no-warehouse" | "no-search-console-schema" | null;
+  reason: "no-warehouse" | "no-search-console-schema" | "error" | null;
+  /** Underlying error message when reason is "error" — surfaced on /seo so
+   * cloud misconfiguration is debuggable instead of masked as missing
+   * credentials. */
+  detail?: string;
 }
 
 function toNumber(value: unknown): number {

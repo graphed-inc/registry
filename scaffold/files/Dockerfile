@@ -17,19 +17,23 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run -w @app/dashboard build
+# Next's build cache is large and useless at runtime; drop it so the runner
+# stage below stays lean.
+RUN rm -rf packages/dashboard/.next/cache
 
 FROM node:24-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
-# Jobs run from source via tsx (hoisted into the root node_modules).
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/package.json ./package.json
-COPY --from=build /app/packages/core ./packages/core
-COPY --from=build /app/packages/jobs ./packages/jobs
+# Ship the whole build stage. Plugins extend the scaffold with root-level
+# paths beyond packages/ (graphed.yaml for projectRoot(), clients/ for
+# per-client plugin config, ...), so an allowlist of COPY paths breaks in
+# cloud while working locally. .dockerignore is the denylist for what enters
+# the image — keep secret-bearing files listed there.
+COPY --from=build /app ./
 
-# Next.js standalone output (server.js + traced node_modules) plus static assets.
-COPY --from=build /app/packages/dashboard/.next/standalone ./packages/dashboard/.next/standalone
+# Next's standalone output does not include static assets or public/; the
+# standalone server only serves them from inside its own tree.
 COPY --from=build /app/packages/dashboard/.next/static ./packages/dashboard/.next/standalone/packages/dashboard/.next/static
 COPY --from=build /app/packages/dashboard/public ./packages/dashboard/.next/standalone/packages/dashboard/public
 

@@ -156,14 +156,20 @@ export default async function SeoPage({
     ? (searchParams.tab as SeoTab)
     : "queue";
   const queue = tab === "queue" ? await loadQueue() : [];
-  // Metrics are best-effort: a warehouse outage must not break the console.
-  const { metrics, reason } =
+  // Metrics are best-effort: a warehouse outage must not break the console —
+  // but surface the real error so cloud misconfiguration is debuggable
+  // instead of masked as missing credentials.
+  const { metrics, reason, detail } =
     tab === "queue"
-      ? await loadSeoMetrics().catch(() => ({
-          metrics: null,
-          reason: "no-warehouse" as const,
-        }))
-      : { metrics: null, reason: null };
+      ? await loadSeoMetrics().catch((error) => {
+          console.error("seo metrics failed", error);
+          return {
+            metrics: null,
+            reason: "error" as const,
+            detail: error instanceof Error ? error.message : String(error),
+          };
+        })
+      : { metrics: null, reason: null, detail: undefined };
   const playbooks = tab === "playbook" ? await loadPlaybooks() : null;
   const playbookOverrides =
     tab === "playbook" ? await loadPlaybookOverrides() : new Set<string>();
@@ -216,6 +222,10 @@ export default async function SeoPage({
             Search Console schema (find it with{" "}
             <code>graphed warehouse query -- &quot;SHOW DATABASES&quot;</code> —
             the <code>search_*</code> entry).
+          </p>
+        ) : reason === "error" ? (
+          <p className="rounded-md border border-dashed border-destructive/50 px-4 py-3 text-xs text-destructive">
+            Metrics query failed: {detail}
           </p>
         ) : (
           <p className="rounded-md border border-dashed px-4 py-3 text-xs text-muted-foreground">

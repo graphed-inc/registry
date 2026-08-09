@@ -1,11 +1,14 @@
 # Fragment merged into graphed.yaml by `graphed plugins add seo --apply-manifest`.
 #
-# After integrating, add the secrets for your chosen CMS to this job's env:
+# Only OPENROUTER_API_KEY is declared: every env var listed here must be set
+# as a project secret or deploys block with waiting_for_secrets. Variables
+# with code defaults (OPENROUTER_MODEL, SEO_CONFIG_PATH) are NOT declared.
+#
+# After integrating, add secrets to this job's env as you enable them:
+#   research:  SERPER_API_KEY, EXA_API_KEY
 #   ghost:     GHOST_API_URL, GHOST_ADMIN_API_KEY
 #   wordpress: WP_URL, WP_USERNAME, WP_APPLICATION_PASSWORD
 #   strapi:    STRAPI_API_URL, STRAPI_API_TOKEN
-# (Un-set secrets declared here would block deploys with waiting_for_secrets,
-# which is why only the universal ones are listed.)
 jobs:
   seo-publish-daily:
     command: npm run job:seo-publish-daily
@@ -14,8 +17,6 @@ jobs:
       timezone: America/New_York
     env:
       - OPENROUTER_API_KEY
-      - OPENROUTER_MODEL
-      - SEO_CONFIG_PATH
     # No automatic retries: a failed run stays visible in the queue and is
     # re-claimable by the next scheduled run (or "Run now" in the dashboard).
     retries: 0

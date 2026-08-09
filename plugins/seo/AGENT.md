@@ -126,11 +126,16 @@ user is unsure.
 
    ```bash
    graphed secrets set OPENROUTER_API_KEY
-   # research (optional but recommended): graphed secrets set SERPER_API_KEY EXA_API_KEY
+   # research (optional but recommended):
+   graphed secrets set SERPER_API_KEY
+   graphed secrets set EXA_API_KEY
    # ghost:     graphed secrets set GHOST_API_URL && graphed secrets set GHOST_ADMIN_API_KEY
-   # wordpress: graphed secrets set WP_URL WP_USERNAME WP_APPLICATION_PASSWORD
+   # wordpress: graphed secrets set WP_URL && graphed secrets set WP_USERNAME && graphed secrets set WP_APPLICATION_PASSWORD
    # strapi:    graphed secrets set STRAPI_API_URL && graphed secrets set STRAPI_API_TOKEN
    ```
+
+   `secrets set` takes ONE secret per invocation — chain or repeat, never
+   pass multiple names.
 
    `SERPER_API_KEY`/`EXA_API_KEY` power the research pass and give the
    fact-check pass material to check against — without them the pipeline
@@ -177,8 +182,15 @@ npm run db:migrate          # applies the plugin migration
    `publicUrlPattern` set) or a draft exists in wp-admin (WordPress).
 6. `npm run build` and `npm run typecheck` must succeed (the Dockerfile runs
    the same Next build).
-7. Deploy: `graphed deploy`, then `graphed jobs run seo-publish-daily`,
-   then `graphed logs --tail 50` to confirm.
+7. Deploy: `graphed deploy`. The expected first-deploy loop:
+   - The deploy reports `waiting_for_secrets` and prints the exact
+     `graphed secrets set <NAME>` commands for whatever is missing — run
+     them, then `graphed deploy` again.
+   - If the re-deploy fails with `API error (409)`, the first deployment's
+     build is still running. Wait a few minutes and re-run; do not start
+     debugging the manifest.
+   - Once `ready`: `graphed jobs run seo-publish-daily`, then
+     `graphed logs --tail 50` to confirm the cloud run end to end.
 
 ## Notes
 
