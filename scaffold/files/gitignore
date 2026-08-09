@@ -1,0 +1,10 @@
+node_modules/
+.next/
+.next-dev/
+dist/
+.env
+.env.local
+# Staged plugin kits are local scratch. (.graphed.json IS committed on
+# purpose — it only holds the account id linking this repo to Graphed.)
+.graphed/plugins
+*.tsbuildinfo

@@ -1,0 +1,16 @@
+{
+  "client": {
+    "name": "Acme Co",
+    "siteUrl": "https://example.com",
+    "brandVoice": "Plain, practical, a little opinionated. Short sentences. Real numbers over adjectives.",
+    "audience": "Owner-operators of small businesses who do their own marketing at night and are allergic to SaaS buzzwords."
+  },
+  "content": {
+    "defaultWordCount": 1400,
+    "ctaText": "See how Acme works",
+    "ctaUrl": "https://example.com/signup"
+  },
+  "cms": {
+    "type": "none"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "name": "@app/jobs",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "job:example-daily": "tsx src/example-daily.ts"
+  },
+  "dependencies": {
+    "@app/core": "*"
+  }
+}

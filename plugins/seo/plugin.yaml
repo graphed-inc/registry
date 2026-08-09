@@ -1,0 +1,72 @@
+name: seo
+version: 0.1.0
+kind: channel
+summary: SEO agent — keyword queue, AI article drafts, Ghost/WordPress/Strapi publishing, dashboard overview
+description: >
+  A daily job that pulls the next keyword from a queue, drafts a
+  publication-ready article with an LLM, and publishes it to Ghost,
+  WordPress, or Strapi. Ships with a /seo dashboard console: Search Console
+  metrics funnel, keyword queue, run-now, article reader, unpublish, and
+  CSV import.
+keywords:
+  - seo
+  - content
+  - blog
+  - articles
+  - ghost
+  - wordpress
+  - strapi
+  - organic
+
+requires:
+  databases:
+    - primary
+
+secrets:
+  - name: OPENROUTER_API_KEY
+    description: OpenRouter key for article drafting (any model via OPENROUTER_MODEL)
+    required: true
+  - name: SERPER_API_KEY
+    description: serper.dev key — Google SERP results for research-grounded drafts (optional)
+    required: false
+  - name: EXA_API_KEY
+    description: exa.ai key — page-content extracts for research + fact-checking (optional)
+    required: false
+  - name: GHOST_API_URL
+    description: Ghost site URL, e.g. https://blog.example.com (cms.type = ghost)
+    required: false
+  - name: GHOST_ADMIN_API_KEY
+    description: Ghost Admin API key in id:secret format (cms.type = ghost)
+    required: false
+  - name: WP_URL
+    description: WordPress site URL (cms.type = wordpress)
+    required: false
+  - name: WP_USERNAME
+    description: WordPress user with an application password (cms.type = wordpress)
+    required: false
+  - name: WP_APPLICATION_PASSWORD
+    description: WordPress application password (cms.type = wordpress)
+    required: false
+  - name: STRAPI_API_URL
+    description: Strapi base URL, e.g. https://<name>.strapiapp.com (cms.type = strapi)
+    required: false
+  - name: STRAPI_API_TOKEN
+    description: Strapi full-access API token from Settings -> API Tokens (cms.type = strapi)
+    required: false
+
+env:
+  - name: OPENROUTER_MODEL
+    default: anthropic/claude-sonnet-4.5
+    description: Model used for article drafting
+  - name: SEO_CONFIG_PATH
+    default: clients/seo/client.config.json
+    description: Path to the client config (brand voice, audience, CMS selection)
+
+provides:
+  jobs:
+    - seo-publish-daily
+  dashboardRoutes:
+    - /seo
+
+compat:
+  scaffold: ">=0.1.0"

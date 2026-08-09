@@ -1,0 +1,92 @@
+# Graphed Registry
+
+Content registry for the Graphed CLI: **scaffolds** (starting points) and
+**plugins** (add-on marketing capabilities). The CLI does not bundle this
+content — it clones the public mirror
+([graphed-inc/registry](https://github.com/graphed-inc/registry)) at runtime
+and caches it at `~/.config/graphed/registry`, so kit updates ship without a
+CLI release. For development in this monorepo, point the CLI at this
+directory instead: `graphed init my-project --registry ./registry` (or
+`GRAPHED_REGISTRY=./registry`).
+
+## Mental model
+
+The consumer of a plugin is an **agent**, not a package manager. A plugin is
+therefore an *integration kit*, not an installable artifact:
+
+- `plugin.yaml` — machine-readable manifest (what it provides, what it needs)
+- `AGENT.md` — the integration runbook the agent follows (singular on purpose:
+  it is read explicitly when `graphed plugins add` points at it, never
+  auto-loaded into future sessions like the `AGENTS.md` convention)
+- `README.md` — human-facing overview
+- `manifest.yaml` — `graphed.yaml` fragment (jobs/env) the CLI can merge
+  mechanically with `graphed plugins add --apply-manifest`
+- `files/` — tested reference source the agent adapts into the host project
+
+The CLI stages kits. The agent integrates them. Verification checklists in
+`AGENT.md` — not determinism — are the quality bar.
+
+## Layout
+
+```
+registry/
+  index.json             # catalog of scaffolds + plugins (validated by zod)
+  scaffold/
+    scaffold.yaml        # { name, version, description }
+    files/               # template tree; __PROJECT_SLUG__ / __PROJECT_NAME__ tokens
+  plugins/
+    <name>/
+      plugin.yaml
+      AGENT.md
+      README.md
+      manifest.yaml
+      files/
+```
+
+## Authoring rules
+
+1. **Validate before commit.** `graphed plugins validate --registry <path>`
+   schema-checks `index.json`, every `plugin.yaml`/`scaffold.yaml`, and that
+   referenced paths exist.
+2. **Plugins target the scaffold's conventions.** Reference code in `files/`
+   must integrate cleanly into a project born from the current scaffold — an
+   npm-workspace layout where domain logic lives in `packages/core`
+   (numbered TypeScript Kysely migrations in `packages/core/src/migrations/`,
+   table types registered once in `packages/core/src/db/types.ts`, env via
+   zod `envSlice()`), job entrypoints in `packages/jobs/src/`, and dashboard
+   pages in `packages/dashboard/app/` (nav registry:
+   `packages/dashboard/lib/plugins.ts`). Dashboard UI is shadcn/ui — plugin
+   pages compose `components/ui/*` and add missing ones via the shadcn CLI.
+   Declare `compat.scaffold` as a minimum version.
+3. **No dry-run gates.** Plugins work end-to-end out of the box — clients
+   should never have to learn a "safe mode" flag. Safety comes from the
+   default configuration instead: a plugin's default config must not write
+   to external platforms (e.g. the seo kit's `cms.type: "none"` generates
+   drafts only), and the AGENT.md verification steps exercise that default
+   before any real credential is added.
+4. **Secrets are declared, never hardcoded.** Every secret the kit needs goes
+   in `plugin.yaml` `secrets:` with a description; the CLI surfaces them to
+   the operator after `add`.
+5. **AGENT.md is a runbook, not an essay.** Ordered steps, the decisions the
+   agent must ask the user (e.g. which CMS), exact file destinations, and a
+   closing verification checklist (local compose Postgres first, then deploy).
+6. **Keep `files/` minimal and real.** Distill from production systems; cut
+   entanglement with other channels. Zero-dependency (`fetch`, platform env)
+   is strongly preferred over new npm packages.
+
+## Versioning
+
+- Every scaffold and plugin carries a semver `version`.
+- A generated project is stamped with the scaffold version in its
+  `graphed.yaml` (`scaffold:` block — stripped by the CLI on deploy, never
+  sent to the server).
+- `plugins add` warns when a kit's `compat.scaffold` range doesn't cover the
+  project's stamped scaffold version (`--force` overrides).
+
+## Syncing
+
+This directory is the source of truth. It is mirrored to the public
+[graphed-inc/registry](https://github.com/graphed-inc/registry) repo
+(copybara), which is what the CLI clones by default. Until the mirror is set
+up, `--registry <path>` / `GRAPHED_REGISTRY` against this directory is the
+supported local flow — no bundling, no publishing step.

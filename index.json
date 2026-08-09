@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "scaffolds": [
+    {
+      "name": "base",
+      "version": "0.1.0",
+      "path": "scaffold",
+      "description": "Minimal marketing-software spine: Postgres + cron job + Next.js dashboard with plugin slots"
+    }
+  ],
+  "plugins": [
+    {
+      "name": "seo",
+      "version": "0.1.0",
+      "kind": "channel",
+      "path": "plugins/seo",
+      "summary": "SEO agent: keyword queue, AI article drafts, Ghost/WordPress/Strapi publishing, dashboard overview",
+      "keywords": ["seo", "content", "blog", "articles", "ghost", "wordpress", "strapi", "organic"]
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "name": "__PROJECT_SLUG__",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20.12"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run -w @app/dashboard dev",
+    "build": "npm run -w @app/dashboard build",
+    "typecheck": "tsc --noEmit",
+    "db:migrate": "npm run -w @app/core db:migrate",
+    "db:reset": "docker compose down -v && docker compose up -d && sleep 2 && npm run db:migrate",
+    "job:example-daily": "npm run -w @app/jobs job:example-daily"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/pg": "^8.11.10",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.0"
+  }
+}

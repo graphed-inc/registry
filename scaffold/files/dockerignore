@@ -1,0 +1,8 @@
+**/node_modules
+**/.next
+dist
+.git
+.env
+.env.local
+.graphed
+docker-compose.yml
