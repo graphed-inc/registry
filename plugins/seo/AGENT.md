@@ -200,9 +200,9 @@ npm run db:migrate          # applies the plugin migration
 
 ## Notes
 
-- There is no dry-run mode: a run always publishes when a CMS is
-  configured. `cms.type: "none"` (drafts only, no external writes) is the
-  way to verify the pipeline safely before wiring up a CMS.
+- A run always publishes when a CMS is configured. `cms.type: "none"`
+  (drafts only, no external writes) is the way to verify the pipeline
+  safely before wiring up a CMS.
 - The pipeline runs four LLM passes (outline → draft → edit → fact-check),
   each following its playbook from `seo_playbooks` (dashboard-editable).
   House rules (no links/dashes/aging dates) stay in code on purpose.

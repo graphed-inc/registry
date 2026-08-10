@@ -68,11 +68,8 @@ graphed plugins add <name>
 follow it end to end. The kit's `files/` are tested reference source: adapt
 them into this repo's conventions; do not invent a parallel structure. Every
 kit's runbook ends in a verification checklist — run it locally (compose
-Postgres, dry-run gates off) before deploying.
+Postgres) before deploying.
 
 ## Safety
 
-- Anything that writes to external platforms ships behind an apply-style env
-  gate (e.g. `SEO_PUBLISH_APPLY=false` means dry-run). Default to dry-run;
-  flip explicitly.
 - Non-idempotent jobs run with `retries: 0` in `graphed.yaml`.

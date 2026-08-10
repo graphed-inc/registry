@@ -100,9 +100,9 @@ when the funnel needs it.
 
 ## Safety
 
-- Publishing is always on — there is no dry-run mode to reason about. If
-  you want review-before-publish, point the CMS adapter at drafts instead
-  (the WordPress adapter already works that way; one-line change in the
+- A run publishes to the configured CMS on every run. If you want
+  review-before-publish, point the CMS adapter at drafts instead (the
+  WordPress adapter already works that way; one-line change in the
   Ghost/Strapi adapters).
 - `retries: 0` in the manifest — a failed run stays visible in the queue
   (`failed` with its error) and is re-claimable by the next scheduled run
