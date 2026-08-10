@@ -134,6 +134,12 @@ user is unsure.
    # strapi:    graphed secrets set STRAPI_API_URL && graphed secrets set STRAPI_API_TOKEN
    ```
 
+   Secrets are injected only for names in the job's `env` list in
+   `graphed.yaml` — setting an undeclared name has no effect. To override a
+   code default (`OPENROUTER_MODEL`, `SEO_CONFIG_PATH`), add the name to the
+   `seo-publish-daily` job's `env` list first, then `graphed secrets set` it
+   and redeploy.
+
    `secrets set` takes ONE secret per invocation — chain or repeat, never
    pass multiple names.
 

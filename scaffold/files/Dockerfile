@@ -10,7 +10,8 @@ COPY package.json package-lock.json* ./
 COPY packages/core/package.json packages/core/package.json
 COPY packages/jobs/package.json packages/jobs/package.json
 COPY packages/dashboard/package.json packages/dashboard/package.json
-RUN npm install
+# Reproducible install when a lockfile is committed; plain install otherwise.
+RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
 
 FROM node:24-slim AS build
 WORKDIR /app
@@ -20,6 +21,11 @@ RUN npm run -w @app/dashboard build
 # Next's build cache is large and useless at runtime; drop it so the runner
 # stage below stays lean.
 RUN rm -rf packages/dashboard/.next/cache
+
+# Drop devDependencies (types, typescript) from the tree the runner copies.
+# tsx is a runtime dependency (jobs and the migrate release command run
+# through it), so it survives the prune.
+RUN npm prune --omit=dev
 
 FROM node:24-slim AS runner
 WORKDIR /app

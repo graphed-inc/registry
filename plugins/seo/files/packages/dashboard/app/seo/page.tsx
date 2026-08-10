@@ -46,6 +46,16 @@ import { PlaybookStudio } from "./playbook-studio";
 
 export const dynamic = "force-dynamic";
 
+// Warehouse/ClickHouse errors can run to multiple kilobytes (the full SQL,
+// every URL in the query, ...). Keep the rendered hint short.
+const ERROR_DETAIL_MAX = 160;
+function truncateDetail(message: string): string {
+  const singleLine = message.replace(/\s+/g, " ").trim();
+  return singleLine.length > ERROR_DETAIL_MAX
+    ? `${singleLine.slice(0, ERROR_DETAIL_MAX)}…`
+    : singleLine;
+}
+
 interface QueueRow {
   keywordId: number;
   keyword: string;
@@ -162,11 +172,14 @@ export default async function SeoPage({
   const { metrics, reason, detail } =
     tab === "queue"
       ? await loadSeoMetrics().catch((error) => {
+          // Full error goes to the server log; the hint gets a bounded one-liner.
           console.error("seo metrics failed", error);
           return {
             metrics: null,
             reason: "error" as const,
-            detail: error instanceof Error ? error.message : String(error),
+            detail: truncateDetail(
+              error instanceof Error ? error.message : String(error),
+            ),
           };
         })
       : { metrics: null, reason: null, detail: undefined };

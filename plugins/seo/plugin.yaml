@@ -54,6 +54,9 @@ secrets:
     description: Strapi full-access API token from Settings -> API Tokens (cms.type = strapi)
     required: false
 
+# Secrets are injected only for names in a job's env list in graphed.yaml —
+# overriding these defaults requires adding the name to the seo-publish-daily
+# job's env list AND `graphed secrets set <NAME>` (see manifest.yaml header).
 env:
   - name: OPENROUTER_MODEL
     default: anthropic/claude-sonnet-4.5

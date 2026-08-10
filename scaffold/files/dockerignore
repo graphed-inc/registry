@@ -5,7 +5,8 @@
 **/.next
 dist
 .git
-.env
-.env.local
+# All dotenv files (.env, .env.local, .env.production, ...) stay out of
+# build context — they hold secrets and belong to the local environment.
+.env*
 .graphed
 docker-compose.yml

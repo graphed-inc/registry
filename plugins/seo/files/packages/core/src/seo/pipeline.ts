@@ -46,17 +46,33 @@ export async function runSeoPipeline(
   const config = loadSeoConfig();
   const db = getDb();
 
-  const claimable = db
-    .selectFrom("seo_keywords")
-    .select(["id", "keyword", "slug"])
-    .where("status", "in", ["pending", "failed"]);
-
+  // Claim atomically: a select-then-update would let the cron job and a
+  // dashboard "Run now" both pick the same keyword. The single UPDATE takes
+  // the row lock as it claims; the SKIP LOCKED subquery makes a concurrent
+  // claimer pick the next keyword instead of the same one.
   const keyword = options.keywordId
-    ? await claimable.where("id", "=", options.keywordId).executeTakeFirst()
-    : await claimable
-        .orderBy("priority", "asc")
-        .orderBy("created_at", "asc")
-        .limit(1)
+    ? await db
+        .updateTable("seo_keywords")
+        .set({ status: "generating", updated_at: new Date() })
+        .where("id", "=", options.keywordId)
+        .where("status", "in", ["pending", "failed"])
+        .returning(["id", "keyword", "slug"])
+        .executeTakeFirst()
+    : await db
+        .updateTable("seo_keywords")
+        .set({ status: "generating", updated_at: new Date() })
+        .where("id", "=", (eb) =>
+          eb
+            .selectFrom("seo_keywords as claim")
+            .select("claim.id")
+            .where("claim.status", "in", ["pending", "failed"])
+            .orderBy("claim.priority", "asc")
+            .orderBy("claim.created_at", "asc")
+            .limit(1)
+            .forUpdate()
+            .skipLocked(),
+        )
+        .returning(["id", "keyword", "slug"])
         .executeTakeFirst();
 
   if (!keyword) {
@@ -70,11 +86,6 @@ export async function runSeoPipeline(
   }
 
   console.log(`Drafting article for "${keyword.keyword}"...`);
-  await db
-    .updateTable("seo_keywords")
-    .set({ status: "generating", updated_at: new Date() })
-    .where("id", "=", keyword.id)
-    .execute();
 
   try {
     const article = await generateArticle({

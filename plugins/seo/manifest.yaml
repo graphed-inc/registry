@@ -4,6 +4,12 @@
 # as a project secret or deploys block with waiting_for_secrets. Variables
 # with code defaults (OPENROUTER_MODEL, SEO_CONFIG_PATH) are NOT declared.
 #
+# Secrets are injected only for names in a job's env list — setting an
+# undeclared name with `graphed secrets set` has NO effect at runtime. To
+# override a code default, BOTH steps are required:
+#   1. Add the name to this job's env list (e.g. `- OPENROUTER_MODEL`)
+#   2. `graphed secrets set OPENROUTER_MODEL` (then redeploy)
+#
 # After integrating, add secrets to this job's env as you enable them:
 #   research:  SERPER_API_KEY, EXA_API_KEY
 #   ghost:     GHOST_API_URL, GHOST_ADMIN_API_KEY

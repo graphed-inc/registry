@@ -17,10 +17,12 @@
     "db:reset": "docker compose down -v && docker compose up -d && sleep 2 && npm run db:migrate",
     "job:example-daily": "npm run -w @app/jobs job:example-daily"
   },
+  "dependencies": {
+    "tsx": "^4.19.2"
+  },
   "devDependencies": {
     "@types/node": "^22.10.0",
     "@types/pg": "^8.11.10",
-    "tsx": "^4.19.2",
     "typescript": "^5.6.0"
   }
 }
