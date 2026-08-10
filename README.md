@@ -5,9 +5,8 @@ Content registry for the Graphed CLI: **scaffolds** (starting points) and
 content — it clones the public mirror
 ([graphed-inc/registry](https://github.com/graphed-inc/registry)) at runtime
 and caches it at `~/.config/graphed/registry`, so kit updates ship without a
-CLI release. For development in this monorepo, point the CLI at this
-directory instead: `graphed init my-project --registry ./registry` (or
-`GRAPHED_REGISTRY=./registry`).
+CLI release. To develop against a local checkout of this repo instead of the
+cached copy, use `--registry <path>` / `GRAPHED_REGISTRY`.
 
 ## Mental model
 
@@ -29,18 +28,17 @@ The CLI stages kits. The agent integrates them. Verification checklists in
 ## Layout
 
 ```
-registry/
-  index.json             # catalog of scaffolds + plugins (validated by zod)
-  scaffold/
-    scaffold.yaml        # { name, version, description }
-    files/               # template tree; __PROJECT_SLUG__ / __PROJECT_NAME__ tokens
-  plugins/
-    <name>/
-      plugin.yaml
-      AGENT.md
-      README.md
-      manifest.yaml
-      files/
+index.json               # catalog of scaffolds + plugins (validated by zod)
+scaffold/
+  scaffold.yaml          # { name, version, description }
+  files/                 # template tree; __PROJECT_SLUG__ / __PROJECT_NAME__ tokens
+plugins/
+  <name>/
+    plugin.yaml
+    AGENT.md
+    README.md
+    manifest.yaml
+    files/
 ```
 
 ## Authoring rules
@@ -83,10 +81,12 @@ registry/
 - `plugins add` warns when a kit's `compat.scaffold` range doesn't cover the
   project's stamped scaffold version (`--force` overrides).
 
-## Syncing
+## Publishing
 
-This directory is the source of truth. It is mirrored to the public
-[graphed-inc/registry](https://github.com/graphed-inc/registry) repo
-(copybara), which is what the CLI clones by default. Until the mirror is set
-up, `--registry <path>` / `GRAPHED_REGISTRY` against this directory is the
-supported local flow — no bundling, no publishing step.
+Content here ships via a manual mirror release run by the maintainers;
+consumers always read the published snapshot.
+
+## License
+
+[MIT](LICENSE) — kit and scaffold source is meant to be copied into your
+own projects.
