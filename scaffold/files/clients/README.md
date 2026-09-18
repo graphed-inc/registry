@@ -4,6 +4,7 @@ Per-client configuration for plugins lives here, one directory per plugin:
 
 ```
 clients/seo/client.config.json
+clients/google-ads/client.config.json
 ```
 
 Plugin code resolves these files relative to the project root (the directory

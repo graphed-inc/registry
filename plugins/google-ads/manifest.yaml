@@ -1,0 +1,24 @@
+# Fragment merged into graphed.yaml by `graphed plugins add google-ads --apply-manifest`.
+#
+# No secrets are declared on the job: GRAPHED_TOKEN / GRAPHED_WAREHOUSE_URL
+# / GRAPHED_TOOLS_URL are injected by the runtime. The LLM uses Graphed
+# Tools OpenRouter (no OpenRouter API key). Default config has
+# writes.enabled false so the first deploy can report warehouse KPIs
+# without Ads creds.
+# Variables with code defaults (OPENROUTER_MODEL, GOOGLE_ADS_CONFIG_PATH)
+# are NOT declared — listing them would block deploy with waiting_for_secrets.
+#
+# Secrets are injected only for names in a job or service env list —
+# setting an undeclared name with `graphed secrets set` has NO effect at
+# runtime. After integrating, add GOOGLE_ADS_SA_KEY_JSON to the daily
+# job env list so Ads API tools work. Do not add it to the dashboard
+# service — the dashboard does not call the Ads API.
+jobs:
+  google-ads-daily:
+    command: npm run job:google-ads-daily
+    schedule:
+      cron: 0 8 * * *
+      timezone: America/New_York
+    # No automatic retries: a failed run stays visible on Sessions.
+    retries: 0
+    timeout_seconds: 3600

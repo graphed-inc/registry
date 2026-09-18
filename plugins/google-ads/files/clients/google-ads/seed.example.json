@@ -1,0 +1,186 @@
+{
+  "target": "graphed.com",
+  "tool": "dataforseo:google_ads.keywords_for_site.live",
+  "location_code": 2840,
+  "language_code": "en",
+  "notes": "Live Graphed Tools catalog pull 2026-09-17 (US/en). Mechanical filters only: 2+ tokens, volume >= 10, not brand-only, cap 25. Setup / coding-agent playbook — review with the user before --apply. Do not apply against Graphed production Ads.",
+  "result_count": 225,
+  "filtered_count": 25,
+  "keywords": [
+    {
+      "term": "ad agent",
+      "searchVolume": 22200,
+      "cpc": 24.49,
+      "competition": "LOW",
+      "source": "site"
+    },
+    {
+      "term": "ai advertising",
+      "searchVolume": 6600,
+      "cpc": 35.81,
+      "competition": "MEDIUM",
+      "source": "site"
+    },
+    {
+      "term": "ai marketing tools",
+      "searchVolume": 4400,
+      "cpc": 35.34,
+      "competition": "LOW",
+      "source": "site"
+    },
+    {
+      "term": "ai tools for marketing",
+      "searchVolume": 4400,
+      "cpc": 35.34,
+      "competition": "LOW",
+      "source": "site"
+    },
+    {
+      "term": "ai for marketing",
+      "searchVolume": 3600,
+      "cpc": 27.8,
+      "competition": "LOW",
+      "source": "site"
+    },
+    {
+      "term": "ai and marketing",
+      "searchVolume": 3600,
+      "cpc": 27.8,
+      "competition": "LOW",
+      "source": "site"
+    },
+    {
+      "term": "marketing analytics",
+      "searchVolume": 2900,
+      "cpc": 28.83,
+      "competition": "LOW",
+      "source": "site"
+    },
+    {
+      "term": "marketing and analytics",
+      "searchVolume": 2900,
+      "cpc": 28.83,
+      "competition": "LOW",
+      "source": "site"
+    },
+    {
+      "term": "ai for data analytics",
+      "searchVolume": 2900,
+      "cpc": 21.64,
+      "competition": "MEDIUM",
+      "source": "site"
+    },
+    {
+      "term": "ai data analytics",
+      "searchVolume": 2900,
+      "cpc": 21.64,
+      "competition": "MEDIUM",
+      "source": "site"
+    },
+    {
+      "term": "data analysis ai",
+      "searchVolume": 2900,
+      "cpc": 21.64,
+      "competition": "MEDIUM",
+      "source": "site"
+    },
+    {
+      "term": "ai for data analysis",
+      "searchVolume": 2900,
+      "cpc": 21.64,
+      "competition": "MEDIUM",
+      "source": "site"
+    },
+    {
+      "term": "ai and data analytics",
+      "searchVolume": 2900,
+      "cpc": 21.64,
+      "competition": "MEDIUM",
+      "source": "site"
+    },
+    {
+      "term": "data analytics and ai",
+      "searchVolume": 2900,
+      "cpc": 21.64,
+      "competition": "MEDIUM",
+      "source": "site"
+    },
+    {
+      "term": "salesforce and ai",
+      "searchVolume": 2900,
+      "cpc": 15.87,
+      "competition": "MEDIUM",
+      "source": "site"
+    },
+    {
+      "term": "agent software",
+      "searchVolume": 2400,
+      "cpc": 38.4,
+      "competition": "LOW",
+      "source": "site"
+    },
+    {
+      "term": "marketing ai",
+      "searchVolume": 2400,
+      "cpc": 13.04,
+      "competition": "MEDIUM",
+      "source": "site"
+    },
+    {
+      "term": "crm agent",
+      "searchVolume": 1900,
+      "cpc": 4.6,
+      "competition": "MEDIUM",
+      "source": "site"
+    },
+    {
+      "term": "ai marketing platform",
+      "searchVolume": 1600,
+      "cpc": 46.87,
+      "competition": "LOW",
+      "source": "site"
+    },
+    {
+      "term": "marketing tools",
+      "searchVolume": 1600,
+      "cpc": 28.83,
+      "competition": "MEDIUM",
+      "source": "site"
+    },
+    {
+      "term": "web marketing tools",
+      "searchVolume": 1600,
+      "cpc": 22.35,
+      "competition": "LOW",
+      "source": "site"
+    },
+    {
+      "term": "ai data",
+      "searchVolume": 1600,
+      "cpc": 19.12,
+      "competition": "LOW",
+      "source": "site"
+    },
+    {
+      "term": "google agent",
+      "searchVolume": 1600,
+      "cpc": 13.2,
+      "competition": "MEDIUM",
+      "source": "site"
+    },
+    {
+      "term": "hubspot ai",
+      "searchVolume": 1300,
+      "cpc": 9.77,
+      "competition": "MEDIUM",
+      "source": "site"
+    },
+    {
+      "term": "ai marketing cloud",
+      "searchVolume": 1000,
+      "cpc": null,
+      "competition": "LOW",
+      "source": "site"
+    }
+  ]
+}

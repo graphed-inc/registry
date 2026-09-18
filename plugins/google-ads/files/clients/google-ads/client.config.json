@@ -1,0 +1,82 @@
+{
+  "client_key": "default",
+  "display_name": "Acme Co",
+  "product_one_liner": "Describe the product in one line",
+  "google_ads": {
+    "customer_id": "0000000000",
+    "login_customer_id": "0000000000"
+  },
+  "campaigns": {
+    "testing_campaign_id": "",
+    "testing_campaign_name": "",
+    "winners_campaign_id": "",
+    "winners_campaign_name": "",
+    "brand_protection_campaign_id": "",
+    "brand_protection_campaign_name": ""
+  },
+  "thresholds": {
+    "target_cpa": 150,
+    "min_conversions": 1,
+    "waste_min_spend": 25,
+    "lookback_days": 30,
+    "success_cpa_target": 250
+  },
+  "winners_guardrails": {
+    "target_cpa": 500,
+    "demote_min_spend": 300,
+    "demote_cpa_multiple": 2
+  },
+  "budget": {
+    "testing_share": 0.2,
+    "winners_share": 0.8,
+    "max_daily_shift_pct": 0.1,
+    "max_total_daily_budget": 600
+  },
+  "agent": {
+    "loop_owns_promotions": false,
+    "max_writes_per_run": 20,
+    "max_api_operations_per_run": 200
+  },
+  "safeguard": {
+    "impressions_drop_pct": 0.5,
+    "pacing_floor_pct": 0.5,
+    "recent_days": 3,
+    "baseline_days": 7,
+    "min_baseline_impressions": 50
+  },
+  "promotion": {
+    "landing_page_url": "https://example.com/",
+    "brand_headline": "Acme",
+    "descriptions": [
+      "Replace with two RSA descriptions under 90 characters.",
+      "Second description for the promotion creative."
+    ],
+    "headline_pool": [
+      "Headline One",
+      "Headline Two",
+      "Book A Demo"
+    ],
+    "competitor_policy": "refuse",
+    "competitor_names": [],
+    "brand_terms": []
+  },
+  "relevance": {
+    "product_context": "Describe what the product is and is not, for search-term intent checks.",
+    "min_confidence": 0.6
+  },
+  "metrics": {
+    "googleAdsSchema": ""
+  },
+  "writes": {
+    "enabled": false
+  },
+  "seed": {
+    "max_keywords": 25,
+    "min_search_volume": 10,
+    "match_type": "PHRASE",
+    "location_code": 2840,
+    "language_code": "en",
+    "testing_ad_group_id": "",
+    "target": ""
+  }
+}

@@ -55,6 +55,7 @@ plugins/
    pages in `packages/dashboard/app/` (nav registry:
    `packages/dashboard/lib/plugins.ts`). Dashboard UI is shadcn/ui — plugin
    pages compose `components/ui/*` and add missing ones via the shadcn CLI.
+   Shipped channel kits today: `seo`, `google-ads`.
    Declare `compat.scaffold` as a minimum version.
 3. **No dry-run gates.** Plugins work end-to-end out of the box — clients
    should never have to learn a "safe mode" flag. Safety comes from the

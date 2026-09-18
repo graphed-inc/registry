@@ -1,0 +1,55 @@
+name: google-ads
+version: 0.1.0
+kind: channel
+summary: Google Ads agent — daily Testing → Winners loop, locked Mastra tools, KPI + sessions dashboard
+description: >
+  A Mastra agent that runs the daily Google Ads Testing → Winners loop
+  through a locked tool belt (scoreboard, search terms, negatives,
+  promotions, budget rebalance). First Testing keywords are setup work
+  (existing account or DataForSEO keywords_for_site) done by the
+  implementing coding agent with the user — not by the daily job.
+  Ships with a /google-ads dashboard: warehouse KPI overview and
+  persisted Mastra traces for every run. Default client config has
+  writes.enabled: false, so mutates go to the Ads API as validateOnly
+  until a human turns writes on.
+keywords:
+  - google ads
+  - ads
+  - search
+  - ppc
+  - mastra
+  - testing
+  - winners
+  - dataforseo
+  - keywords
+
+requires:
+  databases:
+    - primary
+
+secrets:
+  - name: GOOGLE_ADS_SA_KEY_JSON
+    description: Google Ads service-account JSON (full key file, including private_key)
+    required: false
+
+# Secrets are injected only for names on a job or service env list in
+# graphed.yaml — `graphed secrets set` has no effect unless that process
+# lists the name. Add GOOGLE_ADS_SA_KEY_JSON to the google-ads-daily job
+# env list only. The dashboard does not call the Ads API — do not put
+# the write key on that service (see manifest.yaml header).
+env:
+  - name: OPENROUTER_MODEL
+    default: anthropic/claude-sonnet-5
+    description: Model id on Graphed Tools OpenRouter (daily agent, classify_terms, promote brand judge)
+  - name: GOOGLE_ADS_CONFIG_PATH
+    default: clients/google-ads/client.config.json
+    description: Path to the client config (campaign IDs, thresholds, warehouse schema)
+
+provides:
+  jobs:
+    - google-ads-daily
+  dashboardRoutes:
+    - /google-ads
+
+compat:
+  scaffold: ">=0.1.0"

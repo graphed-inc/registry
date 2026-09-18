@@ -16,6 +16,14 @@
       "path": "plugins/seo",
       "summary": "SEO agent: keyword queue, AI article drafts, Ghost/WordPress/Strapi publishing, dashboard overview",
       "keywords": ["seo", "content", "blog", "articles", "ghost", "wordpress", "strapi", "organic"]
+    },
+    {
+      "name": "google-ads",
+      "version": "0.1.0",
+      "kind": "channel",
+      "path": "plugins/google-ads",
+      "summary": "Google Ads agent: daily Testing → Winners loop, locked Mastra tools, KPI + sessions dashboard",
+      "keywords": ["google ads", "ads", "search", "ppc", "mastra", "testing", "winners", "dataforseo", "keywords"]
     }
   ]
 }
