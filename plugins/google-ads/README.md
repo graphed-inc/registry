@@ -104,9 +104,3 @@ example against a production Ads account.
 
 A Cursor/coding agent, raw GAQL, shell, git, or a second Ads account
 inside one process. Another account is another client config (or project).
-
-## Provenance
-
-Distilled from the Graphed Internal `google-ads-agent` Cloud project
-(Mastra tools + shadcn Overview/Sessions dashboard) and the Conduit
-Testing → Winners loop.
