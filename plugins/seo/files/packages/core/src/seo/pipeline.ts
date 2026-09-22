@@ -20,8 +20,8 @@ export interface PipelineResult {
 }
 
 // Takes the client config (not the full SeoConfig) so callers that never
-// generate text — like unpublish from the dashboard — don't need
-// OPENROUTER_API_KEY set.
+// generate text — like unpublish from the dashboard — don't need the
+// Graphed Tools proxy.
 export function resolveAdapter(client: ClientConfig): CmsAdapter | null {
   if (client.cms.type === "ghost") {
     return createGhostAdapter(ghostCredentials());
@@ -91,10 +91,7 @@ export async function runSeoPipeline(
     const article = await generateArticle({
       keyword: keyword.keyword,
       config: config.client,
-      apiKey: config.openRouterApiKey,
       model: config.openRouterModel,
-      serperApiKey: config.serperApiKey,
-      exaApiKey: config.exaApiKey,
     });
 
     await db

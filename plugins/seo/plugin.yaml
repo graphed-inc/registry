@@ -1,13 +1,15 @@
 name: seo
-version: 0.1.0
+version: 0.3.0
 kind: channel
-summary: SEO agent — keyword queue, AI article drafts, Ghost/WordPress/Strapi publishing, dashboard overview
+summary: SEO agent — keyword queue, AI article drafts, CMS publishing, published-article refresh, dashboard overview
 description: >
   A daily job that pulls the next keyword from a queue, drafts a
-  publication-ready article with an LLM, and publishes it to Ghost,
-  WordPress, or Strapi. Ships with a /seo dashboard console: Search Console
-  metrics funnel, keyword queue, run-now, article reader, unpublish, and
-  CSV import.
+  publication-ready article through Graphed Tools (OpenRouter proxy, Serper,
+  and Exa — no vendor API keys), and publishes it to Ghost, WordPress, or
+  Strapi. A second daily job audits published articles against Search
+  Console and the live SERP, and rewrites them when SEO_REFRESH_APPLY is
+  set. Ships with a /seo dashboard console: Search Console metrics funnel,
+  keyword queue, run-now, article reader, unpublish, and CSV import.
 keywords:
   - seo
   - content
@@ -23,15 +25,6 @@ requires:
     - primary
 
 secrets:
-  - name: OPENROUTER_API_KEY
-    description: OpenRouter key for article drafting (any model via OPENROUTER_MODEL)
-    required: true
-  - name: SERPER_API_KEY
-    description: serper.dev key — Google SERP results for research-grounded drafts (optional)
-    required: false
-  - name: EXA_API_KEY
-    description: exa.ai key — page-content extracts for research + fact-checking (optional)
-    required: false
   - name: GHOST_API_URL
     description: Ghost site URL, e.g. https://blog.example.com (cms.type = ghost)
     required: false
@@ -54,13 +47,17 @@ secrets:
     description: Strapi full-access API token from Settings -> API Tokens (cms.type = strapi)
     required: false
 
+# Drafting and SERP research use the Graphed tools proxy. GRAPHED_TOKEN and
+# GRAPHED_TOOLS_URL are injected by the runtime — do not declare them, and
+# do not ask for OpenRouter, Serper, or Exa API keys.
 # Secrets are injected only for names in a job's env list in graphed.yaml —
-# overriding these defaults requires adding the name to the seo-publish-daily
-# job's env list AND `graphed secrets set <NAME>` (see manifest.yaml header).
+# overriding these defaults requires adding the name to the job's env list
+# AND `graphed secrets set <NAME>` (see manifest.yaml header). Refresh-only
+# defaults (SEO_REFRESH_APPLY, batch size, models) live in code the same way.
 env:
   - name: OPENROUTER_MODEL
     default: anthropic/claude-sonnet-4.5
-    description: Model used for article drafting
+    description: Model id on the Graphed Tools OpenRouter proxy (no API key)
   - name: SEO_CONFIG_PATH
     default: clients/seo/client.config.json
     description: Path to the client config (brand voice, audience, CMS selection)
@@ -68,6 +65,7 @@ env:
 provides:
   jobs:
     - seo-publish-daily
+    - seo-refresh
   dashboardRoutes:
     - /seo
 

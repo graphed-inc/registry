@@ -1,5 +1,10 @@
 import { createHmac } from "node:crypto";
-import type { CmsAdapter, PublishInput, PublishResult } from "../types";
+import type {
+  CmsAdapter,
+  PublishInput,
+  PublishResult,
+  UpdateContentInput,
+} from "../types";
 
 // Ghost Admin API auth is a short-lived HS256 JWT built from the
 // id:secret admin key — no SDK needed.
@@ -101,6 +106,44 @@ export function createGhostAdapter(options: {
       const post = body.posts?.[0];
       if (!post) throw new Error("Ghost publish response had no post.");
       return { id: post.id, url: post.url };
+    },
+
+    async updateContent(input: UpdateContentInput): Promise<void> {
+      const getResponse = await fetch(
+        `${apiUrl}/ghost/api/admin/posts/${input.id}/`,
+        { headers: adminHeaders(adminApiKey) },
+      );
+      if (!getResponse.ok) {
+        throw new Error(
+          `Ghost fetch for update failed: ${getResponse.status} ${await getResponse.text()}`,
+        );
+      }
+      const current = (await getResponse.json()) as {
+        posts?: { id: string; updated_at: string; status?: string }[];
+      };
+      const post = current.posts?.[0];
+      if (!post) throw new Error("Ghost post not found for update.");
+
+      const url = new URL(`${apiUrl}/ghost/api/admin/posts/${input.id}/`);
+      url.searchParams.set("source", "html");
+      const response = await fetch(url, {
+        method: "PUT",
+        headers: adminHeaders(adminApiKey),
+        body: JSON.stringify({
+          posts: [
+            {
+              html: input.html,
+              updated_at: post.updated_at,
+              status: post.status,
+            },
+          ],
+        }),
+      });
+      if (!response.ok) {
+        throw new Error(
+          `Ghost update failed: ${response.status} ${await response.text()}`,
+        );
+      }
     },
 
     async unpublish(id: string): Promise<void> {

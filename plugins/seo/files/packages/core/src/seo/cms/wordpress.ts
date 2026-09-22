@@ -1,4 +1,9 @@
-import type { CmsAdapter, PublishInput, PublishResult } from "../types";
+import type {
+  CmsAdapter,
+  PublishInput,
+  PublishResult,
+  UpdateContentInput,
+} from "../types";
 
 // WordPress REST API with an application password. This adapter creates
 // DRAFTS only — a human reviews and publishes in wp-admin. (Ghost, by
@@ -65,6 +70,20 @@ export function createWordPressAdapter(options: {
       }
       const post = (await response.json()) as WordPressPost;
       return { id: String(post.id), url: post.link };
+    },
+
+    async updateContent(input: UpdateContentInput): Promise<void> {
+      // Content only. Omitting status keeps a draft a draft and a live post live.
+      const response = await fetch(apiUrl(`/posts/${input.id}`), {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ content: input.html }),
+      });
+      if (!response.ok) {
+        throw new Error(
+          `WordPress update failed: ${response.status} ${await response.text()}`,
+        );
+      }
     },
 
     async unpublish(id: string): Promise<void> {

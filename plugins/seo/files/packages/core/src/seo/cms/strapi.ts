@@ -1,4 +1,10 @@
-import type { CmsAdapter, ClientConfig, PublishInput, PublishResult } from "../types";
+import type {
+  CmsAdapter,
+  ClientConfig,
+  PublishInput,
+  PublishResult,
+  UpdateContentInput,
+} from "../types";
 import { markdownToHtml } from "../markdown";
 
 // Strapi is different from Ghost/WordPress: every instance defines its own
@@ -21,16 +27,22 @@ interface StrapiResponse {
 // --- Markdown -> Strapi Blocks (Strapi v5 rich-text format) ---------------
 
 type StrapiTextChild = { type: "text"; text: string; bold?: boolean };
+type StrapiLinkChild = {
+  type: "link";
+  url: string;
+  children: StrapiTextChild[];
+};
+type StrapiInline = StrapiTextChild | StrapiLinkChild;
 type StrapiBlock =
-  | { type: "paragraph"; children: StrapiTextChild[] }
-  | { type: "heading"; level: number; children: StrapiTextChild[] }
+  | { type: "paragraph"; children: StrapiInline[] }
+  | { type: "heading"; level: number; children: StrapiInline[] }
   | {
       type: "list";
       format: "ordered" | "unordered";
-      children: { type: "list-item"; children: StrapiTextChild[] }[];
+      children: { type: "list-item"; children: StrapiInline[] }[];
     };
 
-function parseInlineText(text: string): StrapiTextChild[] {
+function parseBold(text: string): StrapiTextChild[] {
   const children: StrapiTextChild[] = [];
   let remaining = text;
 
@@ -46,14 +58,45 @@ function parseInlineText(text: string): StrapiTextChild[] {
       children.push({ type: "text", text: remaining.slice(start) });
       break;
     }
-    children.push({ type: "text", text: remaining.slice(start + 2, end), bold: true });
+    children.push({
+      type: "text",
+      text: remaining.slice(start + 2, end),
+      bold: true,
+    });
     remaining = remaining.slice(end + 2);
   }
 
   return children.length > 0 ? children : [{ type: "text", text: "" }];
 }
 
-export function markdownToStrapiBlocks(markdown: string): StrapiBlock[] {
+function parseInlineText(
+  text: string,
+  allowUrls: ReadonlySet<string>,
+): StrapiInline[] {
+  const children: StrapiInline[] = [];
+  const pattern = /\[([^\]]+)\]\(([^)\s]+)\)/g;
+  let last = 0;
+  for (const match of text.matchAll(pattern)) {
+    const index = match.index ?? 0;
+    children.push(...parseBold(text.slice(last, index)));
+    const label = match[1] ?? "";
+    const href = match[2] ?? "";
+    if (allowUrls.has(href)) {
+      children.push({ type: "link", url: href, children: parseBold(label) });
+    } else {
+      children.push(...parseBold(label));
+    }
+    last = index + match[0].length;
+  }
+  children.push(...parseBold(text.slice(last)));
+  return children.length > 0 ? children : [{ type: "text", text: "" }];
+}
+
+export function markdownToStrapiBlocks(
+  markdown: string,
+  allowUrls: readonly string[] = [],
+): StrapiBlock[] {
+  const allowed = new Set(allowUrls);
   const blocks: StrapiBlock[] = [];
   let listItems: string[] | null = null;
   let listFormat: "ordered" | "unordered" = "unordered";
@@ -68,7 +111,7 @@ export function markdownToStrapiBlocks(markdown: string): StrapiBlock[] {
       format: listFormat,
       children: listItems.map((item) => ({
         type: "list-item" as const,
-        children: parseInlineText(item),
+        children: parseInlineText(item, allowed),
       })),
     });
     listItems = null;
@@ -111,7 +154,7 @@ export function markdownToStrapiBlocks(markdown: string): StrapiBlock[] {
     }
 
     flushList();
-    blocks.push({ type: "paragraph", children: parseInlineText(line) });
+    blocks.push({ type: "paragraph", children: parseInlineText(line, allowed) });
   }
 
   flushList();
@@ -192,13 +235,14 @@ export function createStrapiAdapter(options: {
     };
   }
 
+  function bodyValue(markdown: string, allowUrls: readonly string[]): unknown {
+    if (bodyFormat === "blocks") return markdownToStrapiBlocks(markdown, allowUrls);
+    if (bodyFormat === "html") return markdownToHtml(markdown, { allowUrls: [...allowUrls] });
+    return markdown;
+  }
+
   function buildPayload(input: PublishInput): { data: Record<string, unknown> } {
-    const body =
-      bodyFormat === "blocks"
-        ? markdownToStrapiBlocks(input.article.markdown)
-        : bodyFormat === "html"
-          ? markdownToHtml(input.article.markdown)
-          : input.article.markdown;
+    const body = bodyValue(input.article.markdown, []);
 
     const data: Record<string, unknown> = {
       [fields.title]: input.article.title,
@@ -261,6 +305,19 @@ export function createStrapiAdapter(options: {
         throw new Error("Strapi create response had no documentId.");
       }
       return entryToResult(entry);
+    },
+
+    async updateContent(input: UpdateContentInput): Promise<void> {
+      const allow = new Set(input.allowUrls ?? []);
+      const configured = client.content.ctaUrl?.trim();
+      if (configured) allow.add(configured);
+      await requestJson(`${apiUrl}/api/${collection}/${input.id}`, {
+        method: "PUT",
+        headers,
+        body: JSON.stringify({
+          data: { [fields.body]: bodyValue(input.markdown, [...allow]) },
+        }),
+      });
     },
 
     async unpublish(id: string): Promise<void> {

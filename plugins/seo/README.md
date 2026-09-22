@@ -9,6 +9,8 @@ page to watch it all.
 Every day, the `seo-publish-daily` cron job takes the next `pending`
 keyword from `seo_keywords`, generates an article, stores it in
 `seo_articles`, and publishes it through the configured CMS adapter.
+A second cron, `seo-refresh`, audits articles that are already published
+and can rewrite them. See [Refreshing published articles](#refreshing-published-articles).
 
 Generation is a multi-pass pipeline, and every pass's instructions are a
 user-editable playbook (markdown, edited from the dashboard's Playbook &
@@ -19,10 +21,11 @@ customized. The test console on the same tab runs the full pipeline on the
 editor's current (even unsaved) contents, so iterating on instructions
 never touches the live cron job's playbooks:
 
-0. **Research** — Serper (`SERPER_API_KEY`: top results, people-also-ask,
-   related searches) and Exa (`EXA_API_KEY`: ranking-page content extracts)
-   build a compact research brief. Both optional; missing keys run
-   ungrounded, and the prompts tell the model to stay non-specific.
+0. **Research** — Graphed Tools runs Serper (`serper:search`: top results,
+   people-also-ask, related searches) and Exa (`exa:search`: ranking-page
+   content extracts). Both are metered on the Graphed account. A source that
+   fails is skipped; if both fail, the draft runs ungrounded and the prompts
+   tell the model to stay non-specific.
 1. **Outline** — title, meta, excerpt, and a 5-8 section plan from the
    keyword + research.
 2. **Draft** — the full article from the outline.
@@ -70,6 +73,10 @@ already exists in the CMS and updates the existing entry instead of
 double-posting (Strapi: updates by `documentId`, checking both draft and
 published partitions).
 
+Refresh uses a separate body-only update (`updateContent`). It does not
+change the title, the slug, or the publish status: a WordPress draft stays
+a draft, and a live Ghost or Strapi post stays live.
+
 ## Metrics
 
 Every plugin must show what it's doing. `/seo` opens with the funnel:
@@ -89,11 +96,73 @@ GA4 (`ga4_*`, same same-shape rule) is deliberately not wired up yet — add
 it for post-click behavior (engaged sessions, key events per article URL)
 when the funnel needs it.
 
+## Refreshing published articles
+
+`seo-refresh` runs every morning (`0 6 * * *`, America/New_York), before
+the publish job. It loads `seo_articles` rows with `status = published` and,
+when `metrics.searchConsoleSchema` is set, trailing-28-day Search Console
+page metrics and queries for those URLs (`page_report` and
+`keyword_page_report` in that schema).
+
+For each article in the batch it looks up the keyword on Google
+(`serper:search`), fetches ranking-page text (`exa:contents`), and asks the
+gap model for coverage gaps plus forum insight. If that call fails, a
+heading and token heuristic fills in the gaps. A Serper failure records
+`leave` and does not rewrite, except for thin articles, which still expand.
+
+Decisions:
+
+- **dedupe** — same normalized title, or a numeric slug suffix (`guide-2`
+  beside `guide`), and this URL has fewer impressions. The rewrite points
+  at the stronger article. Title and slug stay. Nothing is unpublished.
+- **expand** — under 500 words (`SEO_REFRESH_THIN_WORD_THRESHOLD`).
+- **refresh** — ranking pages cover topics this article does not. Forum
+  insight is added to the reason and the rewrite prompt when a coverage gap
+  already triggered the refresh. A forum thread by itself is a leave.
+- **leave** — coverage looks aligned, or the SERP lookup failed on a
+  full-length article.
+
+Search Console orders the batch and picks the weaker duplicate. It does not
+choose expand versus refresh. Posts whose body is missing `content.ctaUrl`
+are pulled forward when a CTA is configured. A missing CTA does not bypass
+the audit cooldown. The batch defaults to 8. Posts rewritten in the last 30
+days are skipped. A post audited in the last 7 days is skipped in both
+audit-only and apply mode, except apply mode still retries a non-leave
+decision that has not been written yet.
+
+Every decision is stored in `seo_article_audits` (GSC numbers, reason, gap
+trace). The article and the CMS are not written unless `SEO_REFRESH_APPLY`
+is true or the process is started with `--apply`. A rewrite is discarded
+when it is empty, adds an H1, drops the configured CTA link, drops the
+canonical article link on a dedupe, lacks `##` / `###` headings, comes back
+under the thin-word threshold on an expand, or shrinks below 60% of the
+original. A failed CMS update leaves local
+markdown unchanged and records `leave`, so the post waits out the 7-day
+audit cooldown instead of retrying every night. The run logs how many CMS
+updates failed. If every attempted CMS write failed, the job exits
+non-zero. A partial failure stays exit 0. The previous body is kept in
+`seo_articles.pre_refresh_markdown` the first time a write succeeds.
+
+If Search Console is configured and the warehouse query throws, the job
+fails and writes nothing. If the schema is omitted, the loop still runs
+and impressions are unknown (duplicate ties fall through to slug order).
+`cms.type: "none"` updates local markdown only, and only when apply is on.
+
+Code defaults, not secrets: batch 8, thin threshold 500, minimum age 30
+days, gap model `anthropic/claude-sonnet-4.5`, rewrite model
+`openai/gpt-4.1` (long rewrites time out on Sonnet through the tools proxy).
+The publish job keeps using `OPENROUTER_MODEL`. Override
+a refresh default by adding the name to the `seo-refresh` job's `env` list
+and running `graphed secrets set`.
+
 ## Requirements
 
-- The `primary` database from the base scaffold (two new tables, one
+- The `primary` database from the base scaffold (three new tables, one
   migration)
-- `OPENROUTER_API_KEY`
+- Graphed Tools for drafting and research. `GRAPHED_TOKEN` and
+  `GRAPHED_TOOLS_URL` are injected in cloud and by `graphed dev run`. There
+  is no OpenRouter, Serper, or Exa API key to set. `OPENROUTER_MODEL`
+  (default `anthropic/claude-sonnet-4.5`) selects the model on that proxy.
 - CMS secrets only for the CMS you pick (see `plugin.yaml`)
 - For metrics: a Google Search Console source on the account and its schema
   name in `client.config.json` (see above)
@@ -104,9 +173,11 @@ when the funnel needs it.
   review-before-publish, point the CMS adapter at drafts instead (the
   WordPress adapter already works that way; one-line change in the
   Ghost/Strapi adapters).
-- `retries: 0` in the manifest — a failed run stays visible in the queue
-  (`failed` with its error) and is re-claimable by the next scheduled run
-  or the dashboard's "Run now", instead of being retried blindly.
+- `retries: 0` in the manifest — a failed publish stays visible in the
+  queue (`failed` with its error) and is re-claimable by the next scheduled
+  run or the dashboard's "Run now", instead of being retried blindly.
+- `seo-refresh` does not write until `SEO_REFRESH_APPLY` is set. The first
+  deploys only record audits.
 
 ## Deliberately not included
 
@@ -118,7 +189,7 @@ same warehouse table family the metrics strip already documents.
 
 ## Provenance
 
-Distilled from the Graphed client-systems fleet (Ghost pipeline from the
-Eden/client-systems lineage; WordPress adapter from the NutraCap lineage;
-Strapi adapter and blocks conversion from the Wurthy/Styleframe lineage;
-config-driven CMS selection from the seo-agent pattern).
+Distilled from Graphed's production SEO systems: Ghost publishing, a
+WordPress draft adapter, a Strapi adapter with blocks conversion,
+config-driven CMS selection, and a published-article refresh loop driven
+by Search Console and the live SERP.

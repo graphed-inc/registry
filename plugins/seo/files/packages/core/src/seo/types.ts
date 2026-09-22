@@ -19,6 +19,15 @@ export interface PublishResult {
   url: string | null;
 }
 
+/** Body-only update. Title and slug are not sent. */
+export interface UpdateContentInput {
+  id: string;
+  markdown: string;
+  html: string;
+  /** URLs that must survive markdown conversion (CTA, canonical pointer). */
+  allowUrls?: string[];
+}
+
 // One implementation per CMS. Ghost publishes live posts; the WordPress
 // adapter creates drafts for human review (it never auto-publishes).
 export interface CmsAdapter {
@@ -26,6 +35,11 @@ export interface CmsAdapter {
   /** Returns the existing post id/url when the slug is already published. */
   findBySlug(slug: string): Promise<PublishResult | null>;
   publish(input: PublishInput): Promise<PublishResult>;
+  /**
+   * Replaces the body of an existing post. Does not change the title, slug,
+   * or publish status (WordPress stays a draft; Ghost and Strapi stay live).
+   */
+  updateContent(input: UpdateContentInput): Promise<void>;
   /**
    * Reverts a published post to draft, where the CMS supports it
    * (Ghost, WordPress, and Strapi v5 with Draft & Publish all do).

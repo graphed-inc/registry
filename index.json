@@ -11,10 +11,10 @@
   "plugins": [
     {
       "name": "seo",
-      "version": "0.1.0",
+      "version": "0.3.0",
       "kind": "channel",
       "path": "plugins/seo",
-      "summary": "SEO agent: keyword queue, AI article drafts, Ghost/WordPress/Strapi publishing, dashboard overview",
+      "summary": "SEO agent: keyword queue, AI article drafts, CMS publishing, published-article refresh, dashboard overview",
       "keywords": ["seo", "content", "blog", "articles", "ghost", "wordpress", "strapi", "organic"]
     },
     {

@@ -1,9 +1,10 @@
-import type { ColumnType, Generated } from "kysely";
+import type { ColumnType, Generated, RawBuilder } from "kysely";
 
 // Row types for the SEO plugin's tables (migration: src/migrations/0000_seo.ts).
 // AGENT.md step: register them in packages/core/src/db/types.ts —
-//   import type { SeoArticlesTable, SeoKeywordsTable, SeoPlaybooksTable } from "../seo/tables";
-//   ...and add `seo_keywords` / `seo_articles` / `seo_playbooks` to the Database interface.
+//   import type { SeoArticleAuditsTable, SeoArticlesTable, SeoKeywordsTable, SeoPlaybooksTable } from "../seo/tables";
+//   ...and add `seo_keywords` / `seo_articles` / `seo_playbooks` / `seo_article_audits`
+//   to the Database interface.
 export interface SeoKeywordsTable {
   id: Generated<number>;
   keyword: string;
@@ -24,6 +25,8 @@ export interface SeoArticlesTable {
   meta_description: string | null;
   excerpt: string | null;
   markdown: string | null;
+  /** Body captured the first time a refresh overwrites markdown. */
+  pre_refresh_markdown: string | null;
   cms: string | null;
   cms_post_id: string | null;
   public_url: string | null;
@@ -39,4 +42,24 @@ export interface SeoPlaybooksTable {
   stage: string;
   content: string;
   updated_at: Generated<Date>;
+}
+
+export interface SeoArticleAuditsTable {
+  slug: string;
+  title: string | null;
+  dupe_of: string | null;
+  word_count: number;
+  impressions_28d: number | null;
+  clicks_28d: number | null;
+  ctr_28d: number | null;
+  avg_position_28d: number | null;
+  decision: string;
+  decision_reason: string;
+  gap_trace: ColumnType<
+    Record<string, unknown>,
+    RawBuilder<unknown>,
+    RawBuilder<unknown>
+  >;
+  audited_at: Date;
+  refreshed_at: Date | null;
 }

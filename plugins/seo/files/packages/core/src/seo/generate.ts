@@ -1,10 +1,11 @@
 import type { ClientConfig, GeneratedArticle } from "./types";
 import { loadPlaybooks, type Playbooks } from "./playbooks";
 import { buildResearchBrief } from "./research";
+import { chatCompletion, toolsConfigured } from "./tools";
 
 // Multi-pass article generation:
 //
-//   0. research   Serper + Exa fetch SERP context (research.ts) — optional
+//   0. research   Graphed Tools Serper + Exa (research.ts)
 //   1. outline    keyword + research → title, meta, excerpt, section plan
 //   2. draft      outline + research → full markdown article
 //   3. edit       draft → tightened, house-rules-enforced final copy
@@ -84,42 +85,16 @@ function isOutline(value: unknown): value is Outline {
   );
 }
 
-interface LlmOptions {
-  apiKey: string;
-  model: string;
-}
+const MISSING_TOOLS =
+  "Graphed Tools is not configured. Run through `graphed dev run -- <command>` locally, or deploy, so GRAPHED_TOKEN and GRAPHED_TOOLS_URL are injected. Drafting and SERP research use the Graphed tools proxy.";
 
-/** One OpenRouter chat completion that must return a JSON object. */
+/** One Graphed Tools OpenRouter chat completion that must return JSON. */
 async function chatJson(
-  llm: LlmOptions,
+  model: string,
   system: string,
   user: string,
 ): Promise<unknown> {
-  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${llm.apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: llm.model,
-      response_format: { type: "json_object" },
-      messages: [
-        { role: "system", content: system },
-        { role: "user", content: user },
-      ],
-    }),
-  });
-  if (!response.ok) {
-    throw new Error(
-      `OpenRouter call failed: ${response.status} ${await response.text()}`,
-    );
-  }
-  const body = (await response.json()) as {
-    choices?: { message?: { content?: string } }[];
-  };
-  const content = body.choices?.[0]?.message?.content;
-  if (!content) throw new Error("OpenRouter returned no content.");
+  const content = await chatCompletion({ model, system, user, json: true });
   return parseGeneratedJson(content);
 }
 
@@ -138,29 +113,25 @@ export interface GenerationEvent {
 export async function generateArticle(options: {
   keyword: string;
   config: ClientConfig;
-  apiKey: string;
   model: string;
-  serperApiKey?: string;
-  exaApiKey?: string;
   // Playbooks normally come from the DB; the dashboard's test console passes
   // the editor's current (possibly unsaved) contents over the wire instead,
   // so testing never touches what the live cron job will use.
   playbooks?: Playbooks;
   onEvent?: (event: GenerationEvent) => void;
 }): Promise<GeneratedArticle> {
-  const { keyword, config } = options;
-  const llm = { apiKey: options.apiKey, model: options.model };
+  if (!toolsConfigured()) {
+    throw new Error(MISSING_TOOLS);
+  }
+  const { keyword, config, model } = options;
   const playbooks = options.playbooks ?? (await loadPlaybooks());
   const emit = (event: GenerationEvent): void => {
     console.log(`${event.stage}: ${event.detail}`);
     options.onEvent?.(event);
   };
 
-  // Pass 0: SERP research (skipped silently when no keys are configured).
-  const research = await buildResearchBrief(keyword, {
-    serperApiKey: options.serperApiKey,
-    exaApiKey: options.exaApiKey,
-  });
+  // Pass 0: SERP research through Graphed Tools. A failed source is skipped.
+  const research = await buildResearchBrief(keyword);
   emit({
     stage: "research",
     detail: research
@@ -183,7 +154,7 @@ Return only valid JSON.`;
 
   // Pass 1: outline.
   const outlineRaw = await chatJson(
-    llm,
+    model,
     voice,
     `Plan an original blog article for the keyword "${keyword}".
 
@@ -204,7 +175,7 @@ Return JSON with exactly these keys: title, meta_description, excerpt, sections.
 
   // Pass 2: draft.
   const draftRaw = await chatJson(
-    llm,
+    model,
     voice,
     `Write the full article from this outline, for the keyword "${keyword}".
 
@@ -228,7 +199,7 @@ Return JSON with exactly one key: markdown (the publication-ready article, H2 he
 
   // Pass 3: edit.
   const editedRaw = await chatJson(
-    llm,
+    model,
     voice,
     `Edit this draft. Keep the structure, keep every claim that matters, cut everything that doesn't earn its place.
 
@@ -250,7 +221,7 @@ Return JSON with exactly these keys: title, meta_description, excerpt, markdown 
 
   // Pass 4: fact-check against the research material.
   const checkedRaw = await chatJson(
-    llm,
+    model,
     voice,
     `Fact-check this article against the research material. Fix or remove unsupported claims per the stage instructions; change nothing else.
 

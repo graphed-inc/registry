@@ -162,10 +162,7 @@ export async function testKeywordAction(
     const article = await generateArticle({
       keyword,
       config: config.client,
-      apiKey: config.openRouterApiKey,
       model: config.openRouterModel,
-      serperApiKey: config.serperApiKey,
-      exaApiKey: config.exaApiKey,
       playbooks,
       onEvent: (event) => events.push(event),
     });

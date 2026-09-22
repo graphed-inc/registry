@@ -55,18 +55,19 @@ export interface SeoMetricsResult {
   detail?: string;
 }
 
-function toNumber(value: unknown): number {
-  return typeof value === "number" ? value : Number(value ?? 0);
+export function toNumber(value: unknown): number {
+  const n = typeof value === "number" ? value : Number(value ?? 0);
+  return Number.isFinite(n) ? n : 0;
 }
 
 // The warehouse's %(param)s parameters are all typed String server-side, so
 // numeric intervals and URL lists are interpolated here instead — both are
 // trusted local values (our config, our DB), escaped/defended below.
-function sqlString(value: string): string {
+export function sqlString(value: string): string {
   return `'${value.replace(/\\/g, "\\\\").replace(/'/g, "\\'")}'`;
 }
 
-function assertSchemaName(schema: string): string {
+export function assertSchemaName(schema: string): string {
   if (!/^[a-zA-Z0-9_]+$/.test(schema)) {
     throw new Error(`Invalid warehouse schema name: ${JSON.stringify(schema)}`);
   }

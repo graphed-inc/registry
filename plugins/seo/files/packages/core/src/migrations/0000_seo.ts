@@ -4,10 +4,12 @@ import { type Kysely, sql } from "kysely";
 // number is a placeholder: the integrating agent renames it to the project's
 // next free migration number (see AGENT.md).
 //
-//   seo_keywords   the queue the daily job consumes
-//   seo_articles   one row per generated article, keyed by slug
-//   seo_playbooks  dashboard-edited overrides for the pipeline stage
-//                  instructions (defaults live in code — seo/playbooks.ts)
+//   seo_keywords        the queue the daily publish job consumes
+//   seo_articles        one row per generated article, keyed by slug
+//   seo_playbooks       dashboard-edited overrides for the pipeline stage
+//                       instructions (defaults live in code — seo/playbooks.ts)
+//   seo_article_audits  one row per slug from the refresh job (decision,
+//                       Search Console snapshot, gap trace)
 export async function up(db: Kysely<unknown>): Promise<void> {
   await db.schema
     .createTable("seo_keywords")
@@ -36,6 +38,7 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     .addColumn("meta_description", "text")
     .addColumn("excerpt", "text")
     .addColumn("markdown", "text")
+    .addColumn("pre_refresh_markdown", "text")
     .addColumn("cms", "text")
     .addColumn("cms_post_id", "text")
     .addColumn("public_url", "text")
@@ -58,9 +61,27 @@ export async function up(db: Kysely<unknown>): Promise<void> {
       col.notNull().defaultTo(sql`now()`),
     )
     .execute();
+
+  await db.schema
+    .createTable("seo_article_audits")
+    .addColumn("slug", "text", (col) => col.primaryKey())
+    .addColumn("title", "text")
+    .addColumn("dupe_of", "text")
+    .addColumn("word_count", "integer", (col) => col.notNull())
+    .addColumn("impressions_28d", "double precision")
+    .addColumn("clicks_28d", "double precision")
+    .addColumn("ctr_28d", "double precision")
+    .addColumn("avg_position_28d", "double precision")
+    .addColumn("decision", "text", (col) => col.notNull())
+    .addColumn("decision_reason", "text", (col) => col.notNull())
+    .addColumn("gap_trace", "jsonb", (col) => col.notNull())
+    .addColumn("audited_at", "timestamptz", (col) => col.notNull())
+    .addColumn("refreshed_at", "timestamptz")
+    .execute();
 }
 
 export async function down(db: Kysely<unknown>): Promise<void> {
+  await db.schema.dropTable("seo_article_audits").execute();
   await db.schema.dropTable("seo_playbooks").execute();
   await db.schema.dropTable("seo_articles").execute();
   await db.schema.dropTable("seo_keywords").execute();
