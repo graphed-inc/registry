@@ -1,0 +1,47 @@
+name: outbound
+version: 0.1.0
+kind: channel
+summary: Cold outbound agent — Instantly campaigns, one playbook document each, draft or auto-send replies
+description: >
+  A reply agent for Instantly cold email. The only credential is an
+  Instantly API key. The dashboard lists campaigns with top-line stats.
+  Each campaign has an unibox (save a draft or send a reply), a playbook
+  that can be tested with a fake message before it is saved, and a leads
+  table. Per campaign, the inbox job can be off, draft replies, or
+  auto-send. Drafting uses the Graphed Tools OpenRouter proxy — there
+  is no model API key.
+keywords:
+  - outbound
+  - cold email
+  - cold outbound
+  - instantly
+  - replies
+  - playbook
+
+requires:
+  databases:
+    - primary
+
+secrets:
+  - name: INSTANTLY_API_KEY
+    description: Instantly API v2 key (Settings → Integrations → API). The only credential this plugin needs.
+    required: false
+
+# Drafting uses the Graphed tools proxy. GRAPHED_TOKEN and GRAPHED_TOOLS_URL
+# are injected by the runtime — do not declare them, and do not ask for an
+# OpenRouter API key. INSTANTLY_API_KEY is optional so a project can boot
+# and use the playbook tester before Instantly is connected. Secrets are
+# injected only for names on a service or job env list — see manifest.yaml.
+env:
+  - name: OPENROUTER_MODEL
+    default: anthropic/claude-sonnet-4.5
+    description: Model id on the Graphed Tools OpenRouter proxy (no API key)
+
+provides:
+  jobs:
+    - outbound-replies
+  dashboardRoutes:
+    - /outbound
+
+compat:
+  scaffold: ">=0.1.0"

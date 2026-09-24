@@ -1,0 +1,28 @@
+# Fragment merged into graphed.yaml by `graphed plugins add outbound --apply-manifest`.
+#
+# No vendor model key. GRAPHED_TOKEN and GRAPHED_TOOLS_URL are injected by
+# the runtime. Replies are drafted on `{GRAPHED_TOOLS_URL}/openrouter/v1/chat/completions`.
+#
+# INSTANTLY_API_KEY is intentionally NOT listed. Listing a secret blocks
+# deploy with waiting_for_secrets until it is set, and the dashboard's
+# playbook tester works without Instantly. When the operator has a key:
+#   1. Add `- INSTANTLY_API_KEY` under services.dashboard.env AND under
+#      this job's env list.
+#   2. `graphed secrets set INSTANTLY_API_KEY`
+#   3. Redeploy.
+# Setting the secret without adding the name has no effect at runtime.
+#
+# OPENROUTER_MODEL has a code default and is not listed for the same reason.
+# To override it, add the name to both env lists, set the secret, redeploy.
+jobs:
+  outbound-replies:
+    command: npm run job:outbound-replies
+    schedule:
+      # Every 10 minutes. New campaigns start with reply mode Off, so this
+      # job does not write to Instantly until someone opts a campaign in.
+      cron: "*/10 * * * *"
+      timezone: UTC
+    # Sending a reply is not idempotent. A failed run stays visible; the
+    # next tick retries only emails that were not claimed.
+    retries: 0
+    timeout_seconds: 600
